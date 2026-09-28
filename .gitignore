@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+.env.*
+
+# Runtime data
+data/outputs/*
+data/violations.db
+data/uploads/*
+data/snapshots/*
+
+# Keep directory structure
+!data/uploads/.gitkeep
+!data/snapshots/.gitkeep
+!data/outputs/.gitkeep
+
+# YOLO model weights
+yolo-coco/*.weights
+*.pt
+*.onnx
+*.engine
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+
+# Python cache
+.pytest_cache/
+.mypy_cache/

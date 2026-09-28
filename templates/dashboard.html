@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RoadWatch — Helmet &amp; Plate Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M20 6c-8 0-13 5.5-13 13v6a3 3 0 0 0 3 3h2v-9a8 8 0 0 1 16 0v9h2a3 3 0 0 0 3-3v-6c0-7.5-5-13-13-13Z" stroke="#F2A93B" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M9 23h22" stroke="#F2A93B" stroke-width="2.2" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <h1>RoadWatch</h1>
+      <p class="tagline">Helmet detection &amp; violation evidence</p>
+    </div>
+  </div>
+  <div id="model-status" class="status-pill status-pill--loading">checking detection model…</div>
+</header>
+
+<main class="dashboard">
+
+  <section class="stats-strip" aria-label="Summary statistics">
+    <div class="stat-block">
+      <span class="stat-value" id="stat-scanned">0</span>
+      <span class="stat-label">Tracked people in latest upload</span>
+    </div>
+    <div class="stat-block stat-block--violation">
+      <span class="stat-value" id="stat-violations">0</span>
+      <span class="stat-label">Violation events</span>
+    </div>
+    <div class="stat-block stat-block--compliant">
+      <span class="stat-value" id="stat-compliance">0<span class="stat-unit">%</span></span>
+      <span class="stat-label">Compliance rate</span>
+    </div>
+    <div class="stat-block">
+      <span class="stat-value" id="stat-plates">0</span>
+      <span class="stat-label">Plates read</span>
+    </div>
+    <div class="stat-block"><span class="stat-value" id="stat-helmeted">0</span><span class="stat-label">Helmet-positive tracks</span></div>
+    <div class="stat-block"><span class="stat-value" id="stat-no-helmet">0</span><span class="stat-label">No-helmet tracks (2-class model)</span></div>
+    <div class="stat-block"><span class="stat-value" id="stat-unknown">0</span><span class="stat-label">Unknown person tracks</span></div>
+    <div class="stat-block"><span class="stat-value" id="stat-plates-detected">0</span><span class="stat-label">Plate candidates</span></div>
+    <div class="stat-block"><span class="stat-value" id="stat-plate-rate">0%</span><span class="stat-label">Valid plate reads</span></div>
+    <div class="stat-block"><span class="stat-value" id="stat-ocr-failures">0</span><span class="stat-label">OCR/validation failures</span></div>
+  </section>
+
+  <section class="workspace">
+    <div class="panel upload-panel">
+      <h2>Analyze footage</h2>
+      <p class="panel-hint">Upload a photo or video to detect people and helmet evidence. With the bundled single-class model, a missing helmet detection is marked unknown. Confirmed no-helmet events and plate reads require a trained two-class model.</p>
+
+      <label class="dropzone" id="dropzone" for="file-input">
+        <span id="dropzone-text">Choose a file or drag it here</span>
+        <span class="dropzone-sub">JPG, PNG, WEBP, MP4, AVI, MOV</span>
+      </label>
+      <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.webp,.bmp,.mp4,.avi,.mov,.mkv" hidden>
+
+      <button id="analyze-btn" class="btn-primary" disabled>Run detection</button>
+      <p id="upload-status" class="upload-status"></p>
+    </div>
+
+  </section>
+
+  <section class="panel track-panel">
+    <div class="log-header">
+      <div>
+        <h2>People track record</h2>
+        <p class="panel-hint track-hint">One row per tracked person in the current upload. “Unknown” means the model could not determine helmet status.</p>
+      </div>
+      <label class="track-filter-label" for="track-filter">Show
+        <select id="track-filter" class="track-filter">
+          <option value="">All people</option>
+          <option value="helmet">Helmet detected</option>
+          <option value="no_helmet">No helmet (2-class model)</option>
+          <option value="unknown">Unknown</option>
+        </select>
+      </label>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th scope="col">Person snapshot</th>
+          <th scope="col">Track</th>
+          <th scope="col">Helmet status</th>
+          <th scope="col">Helmet evidence</th>
+          <th scope="col">Source</th>
+          <th scope="col">First frame</th>
+        </tr></thead>
+        <tbody id="tracks-body">
+          <tr class="empty-row"><td colspan="6">Upload footage to create a track record.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel log-panel">
+    <div class="log-header">
+      <h2>Confirmed violations</h2>
+      <span class="log-hint">Most recent first</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Snapshot</th>
+            <th scope="col">Time</th>
+            <th scope="col">Vehicle no.</th>
+            <th scope="col">Helmet status / confidence</th>
+            <th scope="col">Plate confidence</th>
+            <th scope="col">Source</th>
+            <th scope="col">Frame</th>
+          </tr>
+        </thead>
+        <tbody id="violations-body">
+          <tr class="empty-row"><td colspan="7">No violations logged yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<div class="evidence-modal" id="evidence-modal" hidden aria-hidden="true">
+  <section class="evidence-dialog" role="dialog" aria-modal="true" aria-labelledby="evidence-title">
+    <header class="evidence-header">
+      <h2 id="evidence-title">Violation Evidence</h2>
+      <button class="evidence-close" id="evidence-close" type="button" aria-label="Close evidence viewer">×</button>
+    </header>
+    <div class="evidence-content">
+      <div class="evidence-visual">
+        <div class="evidence-image-wrap" id="evidence-image-wrap">
+          <img id="evidence-image" alt="Violation snapshot evidence" hidden>
+          <div class="evidence-unavailable" id="evidence-unavailable" hidden>
+            <strong>Snapshot unavailable</strong><span>File not found</span>
+          </div>
+        </div>
+        <div class="evidence-controls" aria-label="Image zoom controls">
+          <button type="button" id="zoom-out" aria-label="Zoom out">−</button>
+          <button type="button" id="zoom-reset">Reset zoom</button>
+          <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+          <button type="button" id="zoom-fit">Fit to screen</button>
+        </div>
+      </div>
+      <dl class="evidence-metadata" id="evidence-metadata"></dl>
+    </div>
+  </section>
+</div>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
